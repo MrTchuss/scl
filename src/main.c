@@ -89,12 +89,10 @@ int main(int argc, char **argv)
       sctest(sc);
    }
 
-   //if( NULL != sc )
-   //   free(sc);
    if( NULL != scHex )
       free(scHex);
 
-   screlease(sc);
+   //screlease(&sc);
 
    return EXIT_SUCCESS;
 }

@@ -33,13 +33,13 @@ extern int sctest(ShellCode sc);
 /**
  * Reads shellcode from a binary file and store it into a char*
  * @param[in] fileName name of the file from which the shellcode should be read
- * @param[out] sc shellcode. MUST BE FREED BY USER invoking screlease
+ * @param[out] sc shellcode. MUST BE FREED BY USER !
  */
 extern int scload(const char *fileName, ShellCode *sc);
 
 /**
- * Reads shellcode from a binary file and store it into a char*
- * @param[in] shellcode to remove
+ * Free shellcode
+ * @param[in] sc shellcode to remove
  */
 extern int screlease(ShellCode *sc);
 

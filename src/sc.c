@@ -20,9 +20,6 @@
 
 #include <string.h>
 #include <sys/stat.h> // for fstat
-#include <fcntl.h>   // for open and associated O_* flags
-#include <sys/mman.h> // for mmap
-#include <unistd.h> // for close
 
 int sctest(ShellCode const sc)
 {
@@ -34,15 +31,23 @@ int sctest(ShellCode const sc)
 int scload(const char *fileName, ShellCode *sc)
 {
    // file descriptor
-   int fd;
+   FILE *fd;
+   // file number
+   int fileNo;
    // stat
    struct stat pstat;
    // size of the shellcode file
    off_t size;
 
-   OPEN(fd, fileName, O_RDONLY, 0);
-   
-   if( 0 != fstat(fd, &pstat) )
+   // pointer to output string
+   ShellCodeByte *ptr;
+   //
+   int x, i;
+
+   FOPEN(fd, fileName, "rb");
+
+   fileNo = fileno(fd);
+   if( 0 != fstat(fileNo, &pstat) )
    {
       info("Cannot fstat file", ERROR);
       return EXIT_FAILURE;
@@ -50,24 +55,29 @@ int scload(const char *fileName, ShellCode *sc)
    
    size = pstat.st_size;
    sc->size = size;
-   sc->code = (ShellCodeByte*)mmap(NULL, sc->size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-   close(fd);
-   if( MAP_FAILED == sc->code() )
+   sc->code = (ShellCodeByte*)malloc(size);
+
+   ptr = sc->code;
+   i = 0;
+   while( ! feof(fd) && i < sc->size )
    {
-      info("Cannot load shellcode (mmap failed)", ERROR);
-      return EXIT_FAILURE;
+      if( 1 != fread(&x, 1, 1, fd) )
+      {
+         break;
+      }
+      x = x & 0xff;
+      *ptr = x;
+      ++ptr;
+      ++i;
    }
+   fclose(fd);
    return EXIT_SUCCESS;
 }
 
 int screlease(ShellCode *sc)
 {
-   // TODO The addr must be a multiple of the page size.
-   if( 0 != munmap(sc->code, sc->size) )
-   {
-      info("Error in destructing shellcode", ERROR);
-      return EXIT_FAILURE;
-   }
+   if( NULL != sc->code )
+      free(sc->code);
    sc->size = 0;
    sc = NULL;
    return EXIT_SUCCESS;
@@ -98,16 +108,8 @@ int sccheckbadchar(const char const *badchars, const ShellCode sc)
 }
 
 
-int scpad(ShellCode *sc, size_t newSize, size_t padding, char *fileName)
+int scpad(ShellCode *sc, size_t newSize, size_t padding)
 {
-   // if specified, a file with pad data will be created
-   if( fileName != NULL )
-   {
-
-   }
-   else
-   {
-   }
    size_t nopSledSize;
    ShellCodeByte *buf;
    ShellCodeByte *ptr;

